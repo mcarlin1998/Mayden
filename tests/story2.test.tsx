@@ -23,7 +23,7 @@ test("adds a new item to the list", async () => {
   await user.click(screen.getByRole("button", { name: "Add" }));
 
   expect(screen.getByText("Bananas")).toBeDefined();
-  expect(screen.getByText("5 items")).toBeDefined();
+  expect(screen.getByText("5 of 5 still to find")).toBeDefined();
 });
 
 test("refuses an item that is already on the list", async () => {
@@ -34,5 +34,5 @@ test("refuses an item that is already on the list", async () => {
   await user.click(screen.getByRole("button", { name: "Add" }));
 
   expect(screen.getByRole("alert").textContent).toBe("KALE is already on the list.");
-  expect(screen.getByText("4 items")).toBeDefined();
+  expect(screen.getByText("4 of 4 still to find")).toBeDefined();
 });

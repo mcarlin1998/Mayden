@@ -3,4 +3,5 @@ export type Item = {
   name: string;
   quantity: number;
   unitPricePence: number;
+  isChecked: boolean;
 };

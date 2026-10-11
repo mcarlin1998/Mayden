@@ -8,7 +8,8 @@ import type { Item } from "../types";
 type AddItemFormProps = {
   existingItems: Item[];
   nextId: number;
-  onAdd: (item: Item) => void;
+  // A new item is never already picked up, so that is decided by the caller.
+  onAdd: (item: Omit<Item, "isChecked">) => void;
 };
 
 export default function AddItemForm({
