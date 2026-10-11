@@ -2,32 +2,20 @@
 
 import { useState } from "react";
 import styles from "../page.module.css";
-
-type Item = {
-  id: number;
-  name: string;
-  quantity: number;
-  unitPricePence: number;
-};
-
-// Converts a price typed in pounds ("1.75") into integer pence (175).
-// A blank field is rejected: Number("") is 0, which would silently price an
-// item at zero.
-export function toPence(pounds: string): number | null {
-  if (pounds.trim() === "") return null;
-
-  const amount = Number(pounds);
-  if (!Number.isFinite(amount) || amount < 0) return null;
-  return Math.round(amount * 100);
-}
+import { toPence } from "../money";
+import type { Item } from "../types";
 
 type AddItemFormProps = {
   existingItems: Item[];
-  onAdd: (item: Item) => void;
   nextId: number;
+  onAdd: (item: Item) => void;
 };
 
-export default function AddItemForm({ existingItems, onAdd, nextId }: AddItemFormProps) {
+export default function AddItemForm({
+  existingItems,
+  nextId,
+  onAdd,
+}: AddItemFormProps) {
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [price, setPrice] = useState("");
@@ -43,7 +31,11 @@ export default function AddItemForm({ existingItems, onAdd, nextId }: AddItemFor
     }
 
     // Story 2: an item may only appear once on the list.
-    if (existingItems.some((item) => item.name.toLowerCase() === trimmedName.toLowerCase())) {
+    if (
+      existingItems.some(
+        (item) => item.name.toLowerCase() === trimmedName.toLowerCase(),
+      )
+    ) {
       setError(`${trimmedName} is already on the list.`);
       return;
     }
@@ -60,7 +52,12 @@ export default function AddItemForm({ existingItems, onAdd, nextId }: AddItemFor
       return;
     }
 
-    onAdd({ id: nextId, name: trimmedName, quantity: parsedQuantity, unitPricePence });
+    onAdd({
+      id: nextId,
+      name: trimmedName,
+      quantity: parsedQuantity,
+      unitPricePence,
+    });
 
     setName("");
     setQuantity("1");

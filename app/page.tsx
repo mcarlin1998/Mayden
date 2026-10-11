@@ -3,13 +3,9 @@
 import { useState } from "react";
 import styles from "./page.module.css";
 import AddItemForm from "./components/AddItemForm";
-
-type Item = {
-  id: number;
-  name: string;
-  quantity: number;
-  unitPricePence: number;
-};
+import ItemRow from "./components/ItemRow";
+import { formatPrice, totalOf } from "./money";
+import type { Item } from "./types";
 
 // Hardcoded until the list is stored. New items are added to this below.
 const startingItems: Item[] = [
@@ -19,19 +15,10 @@ const startingItems: Item[] = [
   { id: 4, name: "Weetabix", quantity: 2, unitPricePence: 265 },
 ];
 
-// Prices are held as integer pence to avoid floating point rounding errors.
-// Dividing by 100 for display only.
-const gbp = new Intl.NumberFormat("en-GB", {
-  style: "currency",
-  currency: "GBP",
-});
-
-const formatPrice = (pence: number) => gbp.format(pence / 100);
-
 export default function Home() {
   const [items, setItems] = useState(startingItems);
 
-  const totalPence = items.reduce((sum, item) => sum + item.quantity * item.unitPricePence, 0);
+  // Highest id plus one, so ids stay unique after items are removed.
   const nextId = items.length > 0 ? Math.max(...items.map((item) => item.id)) + 1 : 1;
 
   return (
@@ -52,20 +39,18 @@ export default function Home() {
       ) : (
         <ul className={styles.list}>
           {items.map((item) => (
-            <li key={item.id} className={styles.row}>
-              <span className={styles.name}>{item.name}</span>
-              <span className={styles.quantity}>x{item.quantity}</span>
-              <span className={styles.lineTotal}>
-                {formatPrice(item.quantity * item.unitPricePence)}
-              </span>
-            </li>
+            <ItemRow
+              key={item.id}
+              item={item}
+              onRemove={(id) => setItems(items.filter((i) => i.id !== id))}
+            />
           ))}
         </ul>
       )}
 
       <footer className={styles.footer}>
         <span className={styles.footerLabel}>Total</span>
-        <span className={styles.footerTotal}>{formatPrice(totalPence)}</span>
+        <span className={styles.footerTotal}>{formatPrice(totalOf(items))}</span>
       </footer>
     </main>
   );
