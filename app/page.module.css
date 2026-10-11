@@ -28,19 +28,6 @@
   border-top: 1px solid var(--border);
 }
 
-.section {
-  margin-bottom: 32px;
-}
-
-.sectionHeading {
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--text-secondary);
-  padding-top: 24px;
-}
-
 .row {
   display: flex;
   align-items: center;
@@ -54,6 +41,18 @@
   align-items: center;
   gap: 12px;
   flex: 1;
+}
+
+/* The item name is a submit button so clicking it ticks the checkbox. Styled
+   to look like plain text. */
+.nameButton {
+  font: inherit;
+  font-size: 16px;
+  text-align: left;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
   cursor: pointer;
 }
 
@@ -68,10 +67,16 @@
   font-size: 16px;
 }
 
-/* Items in the basket are dimmed; the section heading already says they are
-   picked up, so a strikethrough on top of that is redundant. */
-.checked .name {
+/* Story 4: an item that has been picked up is struck through, so what is
+   still needed stands out on the list. */
+.checked .name,
+.checked .quantity,
+.checked .lineTotal {
   color: var(--text-secondary);
+}
+
+.checked .name {
+  text-decoration: line-through;
 }
 
 .quantity {
@@ -172,18 +177,6 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-}
-
-.footerNote {
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--text-secondary);
-}
-
-.footerRemaining {
-  font-size: 16px;
-  font-weight: 400;
-  font-variant-numeric: tabular-nums;
 }
 
 .footerTotal {

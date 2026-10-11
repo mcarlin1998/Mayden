@@ -1,98 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 import styles from "../page.module.css";
-import { toPence } from "../money";
-import type { Item } from "../types";
+import { addItem } from "../actions";
 
-type AddItemFormProps = {
-  existingItems: Item[];
-  nextId: number;
-  // A new item is never already picked up, so that is decided by the caller.
-  onAdd: (item: Omit<Item, "isChecked">) => void;
-};
-
-export default function AddItemForm({
-  existingItems,
-  nextId,
-  onAdd,
-}: AddItemFormProps) {
-  const [name, setName] = useState("");
-  const [quantity, setQuantity] = useState("1");
-  const [price, setPrice] = useState("");
-  const [error, setError] = useState("");
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const trimmedName = name.trim();
-    if (!trimmedName) {
-      setError("Enter an item name.");
-      return;
-    }
-
-    // Story 2: an item may only appear once on the list.
-    if (
-      existingItems.some(
-        (item) => item.name.toLowerCase() === trimmedName.toLowerCase(),
-      )
-    ) {
-      setError(`${trimmedName} is already on the list.`);
-      return;
-    }
-
-    const parsedQuantity = Number(quantity);
-    if (!Number.isInteger(parsedQuantity) || parsedQuantity < 1) {
-      setError("Quantity must be a whole number of 1 or more.");
-      return;
-    }
-
-    const unitPricePence = toPence(price);
-    if (unitPricePence === null) {
-      setError("Enter a valid price.");
-      return;
-    }
-
-    onAdd({
-      id: nextId,
-      name: trimmedName,
-      quantity: parsedQuantity,
-      unitPricePence,
-    });
-
-    setName("");
-    setQuantity("1");
-    setPrice("");
-    setError("");
-  }
+export default function AddItemForm() {
+  const [error, formAction] = useActionState(addItem, {});
 
   return (
     <>
-      <form className={styles.form} onSubmit={handleSubmit}>
+      <form className={styles.form} action={formAction}>
         <input
           className={`${styles.input} ${styles.nameInput}`}
-          value={name}
-          onChange={(event) => setName(event.target.value)}
+          name="name"
           placeholder="Item name"
           aria-label="Item name"
         />
         <input
           className={`${styles.input} ${styles.smallInput}`}
           type="number"
+          name="quantity"
           min="1"
           step="1"
-          value={quantity}
-          onChange={(event) => setQuantity(event.target.value)}
+          defaultValue="1"
           placeholder="Qty"
           aria-label="Quantity"
         />
         <input
           className={`${styles.input} ${styles.smallInput}`}
           type="number"
+          name="price"
           min="0"
           step="0.01"
-          value={price}
-          onChange={(event) => setPrice(event.target.value)}
           placeholder="Price"
           aria-label="Price"
         />
@@ -101,9 +40,9 @@ export default function AddItemForm({
         </button>
       </form>
 
-      {error && (
+      {error.error && (
         <p className={styles.error} role="alert">
-          {error}
+          {error.error}
         </p>
       )}
     </>

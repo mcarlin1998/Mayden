@@ -14,5 +14,10 @@ export default defineConfig({
     // Lets Testing Library clean up between tests automatically, without a
     // separate setup file.
     globals: true,
+    env: {
+      // Tests must never touch the real shopping_list.db, otherwise running
+      // them would wipe the user's own list.
+      DATABASE_PATH: ":memory:",
+    },
   },
 });
