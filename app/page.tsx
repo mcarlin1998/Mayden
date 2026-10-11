@@ -1,4 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import styles from "./page.module.css";
+import AddItemForm from "./components/AddItemForm";
 
 type Item = {
   id: number;
@@ -7,8 +11,8 @@ type Item = {
   unitPricePence: number;
 };
 
-// Hardcoded for now. The list moves into a database once items can be added.
-const items: Item[] = [
+// Hardcoded until the list is stored. New items are added to this below.
+const startingItems: Item[] = [
   { id: 1, name: "Oat milk", quantity: 2, unitPricePence: 175 },
   { id: 2, name: "Soda bread", quantity: 1, unitPricePence: 210 },
   { id: 3, name: "Kale", quantity: 1, unitPricePence: 150 },
@@ -24,15 +28,24 @@ const gbp = new Intl.NumberFormat("en-GB", {
 
 const formatPrice = (pence: number) => gbp.format(pence / 100);
 
-const totalPence = items.reduce((sum, item) => sum + item.quantity * item.unitPricePence, 0);
-
 export default function Home() {
+  const [items, setItems] = useState(startingItems);
+
+  const totalPence = items.reduce((sum, item) => sum + item.quantity * item.unitPricePence, 0);
+  const nextId = items.length > 0 ? Math.max(...items.map((item) => item.id)) + 1 : 1;
+
   return (
     <main className={styles.main}>
       <header className={styles.header}>
         <h1 className={styles.title}>Weekly shop</h1>
         <p className={styles.subtitle}>{items.length} items</p>
       </header>
+
+      <AddItemForm
+        existingItems={items}
+        nextId={nextId}
+        onAdd={(item) => setItems([...items, item])}
+      />
 
       {items.length === 0 ? (
         <p className={styles.empty}>Nothing on the list yet.</p>
