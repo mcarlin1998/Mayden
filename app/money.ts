@@ -34,3 +34,10 @@ export function totalOf(
     0,
   );
 }
+
+// Story 8: how much the shop is over its spending limit, or null when no limit
+// has been set. Only strictly greater counts as over budget.
+export function overBudgetBy(totalPence: number, limitPence: number | null): number | null {
+  if (limitPence === null) return null;
+  return totalPence > limitPence ? totalPence - limitPence : 0;
+}

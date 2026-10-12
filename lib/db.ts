@@ -30,6 +30,12 @@ function createDatabase(): DatabaseSync {
       -- in the UI so it cannot be bypassed.
       UNIQUE (name COLLATE NOCASE)
     );
+
+    -- Story 8: the shop's spending limit, in pence. Null until one is set.
+    CREATE TABLE IF NOT EXISTS settings (
+      key   TEXT PRIMARY KEY,
+      value INTEGER
+    );
   `);
 
   // Seeds a new database so the list is not empty on first run. Tests use an
@@ -136,4 +142,19 @@ export function deleteItem(id: number): void {
 
 export function toggleItem(id: number): void {
   db.prepare("UPDATE items SET is_checked = 1 - is_checked WHERE id = ?").run(id);
+}
+
+/** The shop's spending limit in pence, or null when none has been set. */
+export function getBudgetLimit(): number | null {
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'budget_limit_pence'").get() as
+    | { value: number | null }
+    | undefined;
+
+  return row?.value ?? null;
+}
+
+export function setBudgetLimit(pence: number | null): void {
+  db.prepare(
+    "INSERT INTO settings (key, value) VALUES ('budget_limit_pence', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+  ).run(pence);
 }

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { deleteItem, insertItem, moveItemUp, toggleItem } from "@/lib/db";
+import { deleteItem, insertItem, moveItemUp, setBudgetLimit, toggleItem } from "@/lib/db";
 import { toPence } from "@/app/money";
 
 export async function addItem(
@@ -48,5 +48,20 @@ export async function setItemChecked(formData: FormData): Promise<void> {
 
 export async function moveUp(formData: FormData): Promise<void> {
   moveItemUp(Number(formData.get("id")));
+  revalidatePath("/");
+}
+
+// Story 8: set or clear the shop's spending limit.
+export async function setBudget(formData: FormData): Promise<void> {
+  const input = String(formData.get("limit") ?? "").trim();
+
+  if (input === "") {
+    setBudgetLimit(null);
+  } else {
+    const pence = toPence(input);
+    if (pence === null) return; // ignore nonsense rather than storing it
+    setBudgetLimit(pence);
+  }
+
   revalidatePath("/");
 }
