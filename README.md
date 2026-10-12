@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Shopping list
 
-## Getting Started
+A small shopping list app. You can add items, remove them, tick them off when
+you have got them, move them around, and set a budget.
 
-First, run the development server:
+## Running it
+
+You need Node 24.
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The database makes itself the first time you load the page. There is nothing to
+set up. It fills itself with a few items so there is something to look at.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+If you want to start again, delete the `shopping_list.db` file and reload the
+page.
 
-## Learn More
+```bash
+npm test
+```
 
-To learn more about Next.js, take a look at the following resources:
+## What is in it
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Story | What it does                                      |
+| ----- | ------------------------------------------------- |
+| 1     | See the items on the list                         |
+| 2     | Add an item                                       |
+| 3     | Remove an item                                    |
+| 4     | Tick an item off                                  |
+| 5     | The list is still there when you come back        |
+| 6     | Move items up and down                            |
+| 7     | Shows the total cost                              |
+| 8     | Set a limit and it tells you when you are over it |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+I did stories 1 to 8. I did not do 9 (email) or 10 (login). Without login
+everybody sees the same list, so if you use it with someone else they can
+change your list.
 
-## Deploy on Vercel
+## How it works
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Next.js with TypeScript. The list is stored in a SQLite file.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/
+  page.tsx        the page. It reads the list and draws it
+  actions.ts      the things you can do to the list
+  components/     the form, one row of the list, the budget form
+  money.ts        working out prices
+  types.ts        what an item looks like
+lib/db.ts         the database
+tests/            the tests
+```
+
+The page runs on the server so it can read the database straight away. When you
+click something it sends the change to the server, the server saves it, and the
+page refreshes itself.
+
+There is no API. I did not think it was needed for one page.
+
+## Tests
+
+17 tests. They cover the money, the database, the order of the list, and the
+budget.
+
+## Things I know are not right
+
+- No login. Anyone using the app has the same list and the same budget.
+- If I change the shape of the database I have to delete the file and let it
+  make itself again. There is no way to migrate it.
+- Clicking the checkbox, the up arrow and the Set button are not tested.
