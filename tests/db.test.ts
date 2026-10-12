@@ -1,24 +1,16 @@
-import { test, expect, beforeEach, afterAll } from "vitest";
+import { test, expect, beforeEach } from "vitest";
 
-import { db, deleteItem, getItems, insertItem, toggleItem } from "@/lib/db";
+import { db, deleteItem, getItems, insertItem, moveItemUp, toggleItem } from "@/lib/db";
 
-// Story 5: "As a shopper I want to be able to still see the state of my
-// shopping list when I come back to it."
+// Stories 5 and 6: the shopping list is stored, and its order can be changed.
 
-// Each test starts from a known list, so the seeded items are cleared first.
+const names = () => getItems().map((item) => item.name);
+
+// Each test starts from the same known list. The in-memory database is left
+// empty by lib/db.ts, so seed a single item here.
 beforeEach(() => {
   db.exec("DELETE FROM items");
   insertItem({ name: "Kale", quantity: 1, unitPricePence: 150 });
-});
-
-afterAll(() => {
-  db.exec("DELETE FROM items");
-});
-
-test("items are read back in order", () => {
-  insertItem({ name: "Milk", quantity: 2, unitPricePence: 175 });
-
-  expect(getItems().map((item) => item.name)).toEqual(["Kale", "Milk"]);
 });
 
 test("an item keeps its quantity, price and checked state", () => {
@@ -37,27 +29,60 @@ test("a new item is not already checked", () => {
 });
 
 test("an item can be ticked off and back on", () => {
-  const [item] = getItems();
-
-  toggleItem(item.id);
+  toggleItem(getItems()[0].id);
   expect(getItems()[0].isChecked).toBe(true);
 
-  toggleItem(item.id);
+  toggleItem(getItems()[0].id);
   expect(getItems()[0].isChecked).toBe(false);
-});
-
-test("removing an item leaves the others alone", () => {
-  insertItem({ name: "Milk", quantity: 1, unitPricePence: 175 });
-
-  deleteItem(getItems()[0].id);
-
-  expect(getItems().map((item) => item.name)).toEqual(["Milk"]);
-});
-
-test("a duplicate name is rejected by the database", () => {
-  expect(() => insertItem({ name: "Kale", quantity: 1, unitPricePence: 999 })).toThrow();
 });
 
 test("a duplicate name is rejected whatever the capitalisation", () => {
   expect(() => insertItem({ name: "KALE", quantity: 1, unitPricePence: 999 })).toThrow();
+});
+
+test("removing an item leaves the others alone", () => {
+  insertItem({ name: "Milk", quantity: 1, unitPricePence: 175 });
+  // List is Milk, Kale.
+
+  deleteItem(getItems()[0].id);
+
+  expect(names()).toEqual(["Kale"]);
+});
+
+test("a new item is added to the top of the list", () => {
+  insertItem({ name: "Milk", quantity: 1, unitPricePence: 175 });
+  insertItem({ name: "Bread", quantity: 1, unitPricePence: 210 });
+  // List is Bread, Milk, Kale.
+
+  expect(names()).toEqual(["Bread", "Milk", "Kale"]);
+});
+
+test("an item can be moved earlier in the list", () => {
+  insertItem({ name: "Milk", quantity: 1, unitPricePence: 175 });
+  insertItem({ name: "Bread", quantity: 1, unitPricePence: 210 });
+  // List is Bread, Milk, Kale.
+
+  moveItemUp(getItems()[2].id); // move Kale up one place
+
+  expect(names()).toEqual(["Bread", "Kale", "Milk"]);
+});
+
+test("the first item cannot move any earlier", () => {
+  moveItemUp(getItems()[0].id);
+
+  expect(names()).toEqual(["Kale"]);
+});
+
+test("removing an item keeps the rest in order", () => {
+  insertItem({ name: "Milk", quantity: 1, unitPricePence: 175 });
+  insertItem({ name: "Bread", quantity: 1, unitPricePence: 210 });
+  // List is Bread, Milk, Kale.
+
+  deleteItem(getItems()[1].id); // remove Milk from the middle
+
+  expect(names()).toEqual(["Bread", "Kale"]);
+
+  moveItemUp(getItems()[1].id); // ordering must still work afterwards
+
+  expect(names()).toEqual(["Kale", "Bread"]);
 });

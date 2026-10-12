@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { deleteItem, insertItem, toggleItem } from "@/lib/db";
+import { deleteItem, insertItem, moveItemUp, toggleItem } from "@/lib/db";
 import { toPence } from "@/app/money";
 
 export async function addItem(
@@ -30,6 +30,8 @@ export async function addItem(
     return { error: `${name} is already on the list.` };
   }
 
+  // Without this the page would be served from cache and the new item would
+  // not appear.
   revalidatePath("/");
   return {};
 }
@@ -41,5 +43,10 @@ export async function removeItem(formData: FormData): Promise<void> {
 
 export async function setItemChecked(formData: FormData): Promise<void> {
   toggleItem(Number(formData.get("id")));
+  revalidatePath("/");
+}
+
+export async function moveUp(formData: FormData): Promise<void> {
+  moveItemUp(Number(formData.get("id")));
   revalidatePath("/");
 }

@@ -79,6 +79,24 @@
   text-decoration: line-through;
 }
 
+.moveButton {
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.moveButton:hover {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  color: inherit;
+}
+
 .quantity {
   font-size: 14px;
   color: var(--text-secondary);

@@ -23,6 +23,8 @@ function createDatabase(): DatabaseSync {
       quantity         INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
       unit_price_pence INTEGER NOT NULL CHECK (unit_price_pence >= 0),
       is_checked       INTEGER NOT NULL DEFAULT 0 CHECK (is_checked IN (0, 1)),
+      -- Story 6: the order the shopper walks through the shop.
+      position         INTEGER NOT NULL,
 
       -- Story 2: an item name may only appear once. Enforced here rather than
       -- in the UI so it cannot be bypassed.
@@ -30,19 +32,26 @@ function createDatabase(): DatabaseSync {
     );
   `);
 
-  // Seeds a new database so the list is not empty on first run.
+  // Seeds a new database so the list is not empty on first run. Tests use an
+  // in-memory database and set their own data, so they are left empty.
   const { count } = database.prepare("SELECT COUNT(*) AS count FROM items").get() as {
     count: number;
   };
 
-  if (count === 0) {
+  if (count === 0 && DB_PATH !== ":memory:") {
     const add = database.prepare(
-      "INSERT INTO items (name, quantity, unit_price_pence, is_checked) VALUES (?, ?, ?, ?)",
+      "INSERT INTO items (name, quantity, unit_price_pence, is_checked, position) VALUES (?, ?, ?, 0, ?)",
     );
-    add.run("Oat milk", 2, 175, 0);
-    add.run("Soda bread", 1, 210, 0);
-    add.run("Kale", 1, 150, 0);
-    add.run("Weetabix", 2, 265, 0);
+    const examples: [string, number, number][] = [
+      ["Oat milk", 2, 175],
+      ["Soda bread", 1, 210],
+      ["Kale", 1, 150],
+      ["Weetabix", 2, 265],
+    ];
+
+    examples.forEach(([name, quantity, unitPricePence], position) => {
+      add.run(name, quantity, unitPricePence, position);
+    });
   }
 
   return database;
@@ -61,7 +70,7 @@ export function getItems(): Item[] {
     .prepare(
       `SELECT id, name, quantity, unit_price_pence AS unitPricePence,
               is_checked AS isChecked
-       FROM items ORDER BY id`,
+       FROM items ORDER BY position`,
     )
     .all() as unknown as (Omit<Item, "isChecked"> & { isChecked: number })[];
 
@@ -69,13 +78,60 @@ export function getItems(): Item[] {
 }
 
 export function insertItem(item: Omit<Item, "id" | "isChecked">): void {
+  // A new item goes to the top of the route, because you add it while
+  // standing in the aisle where you found it.
+  const { next } = db.prepare("SELECT COALESCE(MIN(position), 0) - 1 AS next FROM items").get() as {
+    next: number;
+  };
+
   db.prepare(
-    "INSERT INTO items (name, quantity, unit_price_pence, is_checked) VALUES (?, ?, ?, 0)",
-  ).run(item.name, item.quantity, item.unitPricePence);
+    "INSERT INTO items (name, quantity, unit_price_pence, is_checked, position) VALUES (?, ?, ?, 0, ?)",
+  ).run(item.name, item.quantity, item.unitPricePence, next);
+}
+
+/**
+ * Swaps an item with the one directly before it. Positions are always
+ * contiguous, so exchanging the two is enough.
+ */
+export function moveItemUp(id: number): void {
+  const rows = db
+    .prepare("SELECT id, position FROM items ORDER BY position")
+    .all() as { id: number; position: number }[];
+
+  const index = rows.findIndex((row) => row.id === id);
+  if (index <= 0) return; // already first, nothing to do
+
+  db.exec("BEGIN");
+  try {
+    const swap = db.prepare("UPDATE items SET position = ? WHERE id = ?");
+    swap.run(rows[index - 1].position, rows[index].id);
+    swap.run(rows[index].position, rows[index - 1].id);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 export function deleteItem(id: number): void {
-  db.prepare("DELETE FROM items WHERE id = ?").run(id);
+  // Closing the gap keeps the remaining positions contiguous, so ordering by
+  // position stays correct.
+  const removed = db.prepare("SELECT position FROM items WHERE id = ?").get(id) as
+    | { position: number }
+    | undefined;
+  if (!removed) return;
+
+  db.exec("BEGIN");
+  try {
+    db.prepare("DELETE FROM items WHERE id = ?").run(id);
+    db.prepare("UPDATE items SET position = position - 1 WHERE position > ?").run(
+      removed.position,
+    );
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 export function toggleItem(id: number): void {

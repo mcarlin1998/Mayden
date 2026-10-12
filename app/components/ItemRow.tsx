@@ -2,17 +2,17 @@
 
 import { useRef } from "react";
 import styles from "../page.module.css";
-import { removeItem, setItemChecked } from "../actions";
+import { moveUp, removeItem, setItemChecked } from "../actions";
 import { formatPrice } from "../money";
 import type { Item } from "../types";
 
 export default function ItemRow({ item }: { item: Item }) {
   const formRef = useRef<HTMLFormElement>(null);
 
+  // Each control posts its own Server Action, so the page needs no client
+  // state. Every form carries the item id as a hidden field.
   return (
     <li className={item.isChecked ? `${styles.row} ${styles.checked}` : styles.row}>
-      {/* A form per control: ticking the checkbox and the remove button each
-          post to a Server Action, so the page needs no client state. */}
       <form action={setItemChecked} ref={formRef} className={styles.itemLabel}>
         <input type="hidden" name="id" value={item.id} />
         <input
@@ -25,6 +25,17 @@ export default function ItemRow({ item }: { item: Item }) {
         />
         <button type="submit" className={styles.nameButton}>
           {item.name}
+        </button>
+      </form>
+
+      <form action={moveUp}>
+        <input type="hidden" name="id" value={item.id} />
+        <button
+          type="submit"
+          className={styles.moveButton}
+          aria-label={`Move ${item.name} earlier`}
+        >
+          <span aria-hidden="true">&uarr;</span>
         </button>
       </form>
 
