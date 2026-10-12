@@ -135,13 +135,15 @@
 
 /* Story 4: an item already picked up is struck through, so what is still
    needed stands out. */
-.checked .name,
+/* Story 4: an item already picked up is struck through, so what is still
+   needed stands out. The name is a button, so target that. */
+.checked .nameButton,
 .checked .quantity,
 .checked .lineTotal {
   color: var(--muted);
 }
 
-.checked .name {
+.checked .nameButton {
   text-decoration: line-through;
 }
 
