@@ -5,7 +5,8 @@ you have got them, move them around, and set a budget.
 
 ## Running it
 
-You need Node 24.
+You need Node 22.5 or newer. The app uses the SQLite module that comes with
+Node, which is why it will not work on older versions.
 
 ```bash
 npm install
